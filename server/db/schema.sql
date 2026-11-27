@@ -1,4 +1,6 @@
 -- Пересоздаём таблицы с нуля (удобно на время разработки)
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS purchase_orders;
 DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS users;          

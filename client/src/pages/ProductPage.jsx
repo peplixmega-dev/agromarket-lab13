@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import AddToCartButton from '../components/AddToCartButton';
 import { apiFetch } from '../api';
 
 export default function ProductPage({ id, onAdd }) {
@@ -19,7 +20,8 @@ export default function ProductPage({ id, onAdd }) {
       {product.image && <img src={product.image} alt={product.name} />}
       <p>{product.price} тенге / {product.unit}</p>
       <p>Категория: {product.category}</p>
-      <button type="button" onClick={() => onAdd(product)}>В корзину</button>
+      {product.stock != null && <p>Остаток: {product.stock} {product.unit}</p>}
+      <AddToCartButton product={product} onAdd={onAdd} />
       <a href="#contact">Оформить заявку</a>
     </>}
   </section>;

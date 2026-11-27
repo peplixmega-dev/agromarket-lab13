@@ -1,8 +1,8 @@
 import { http, HttpResponse } from 'msw';
 
 export const products = [
-  { id: 1, name: 'Мёд гречишный', price: 3500, category: 'Мёд', unit: 'кг', image: '/honey.png' },
-  { id: 2, name: 'Пшеница', price: 120, category: 'Зерно', unit: 'кг', image: '/wheat.png' },
+  { id: 1, name: 'Мёд гречишный', price: 3500, category: 'Мёд', unit: 'кг', stock: 2, image: '/honey.png' },
+  { id: 2, name: 'Пшеница', price: 120, category: 'Зерно', unit: 'кг', stock: 20, image: '/wheat.png' },
 ];
 export const account = { id: 7, name: 'Айгерим', email: 'farmer@example.test', role: 'user' };
 export const handlers = [
@@ -23,6 +23,8 @@ export const handlers = [
   }),
   http.get('*/api/auth/me', ({ request }) => request.headers.get('Authorization') === 'Bearer test-token'
     ? HttpResponse.json(account) : HttpResponse.json({ error: 'Недействительный токен' }, { status: 401 })),
+  http.get('*/api/orders/my', () => HttpResponse.json([])),
+  http.get('*/api/orders/incoming', () => HttpResponse.json([])),
   http.get('*/api/orders', () => HttpResponse.json([])),
   http.post('*/api/orders', async ({ request }) => HttpResponse.json({ ...(await request.json()), id: 42 }, { status: 201 })),
 ];

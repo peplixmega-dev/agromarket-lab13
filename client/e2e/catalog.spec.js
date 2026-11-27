@@ -12,7 +12,11 @@ test.beforeEach(async ({ page }) => {
 test('@smoke главная показывает каталог из API', async ({ page }) => {
   const products = page.waitForResponse((res) => new URL(res.url()).pathname === '/api/products');
   await page.goto('/');
-  expect((await products).status()).toBe(200);
+  const response = await products;
+  expect(response.status()).toBe(200);
+  const list = await response.json();
+  expect(list.length).toBeGreaterThan(0);
+  expect(list.every((p) => Number.isInteger(p.stock) && p.stock >= 0)).toBe(true);
   await expect(page).toHaveTitle(/Верити.*АгроМаркет/);
   await expect(page.getByTestId('product-card').first()).toBeVisible();
 });
@@ -27,4 +31,10 @@ test('@smoke переход из каталога на товар и пряма�
   const response = await page.reload();
   expect(response.status()).toBe(200);
   await expect(page.getByRole('heading', { name, level: 1, exact: true })).toBeVisible();
+});
+
+test('@smoke корзина открывается по прямой ссылке', async ({ page }) => {
+  const response = await page.goto('/cart');
+  expect(response.status()).toBe(200);
+  await expect(page.getByRole('heading', { name: 'Корзина', level: 1 })).toBeVisible();
 });

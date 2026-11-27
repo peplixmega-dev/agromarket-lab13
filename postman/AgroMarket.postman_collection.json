@@ -1,0 +1,307 @@
+{
+  "info": {
+    "name": "АгроМаркет · Заказы v1.1.0",
+    "description": "Запустите локальное демо, импортируйте коллекцию и выполните запросы по порядку. Коллекция регистрирует отдельного покупателя, создаёт один заказ и отменяет его.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Регистрация тестового покупателя",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/auth/register",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Покупатель ЛР13\",\n  \"email\": \"{{buyerEmail}}\",\n  \"password\": \"{{buyerPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const uid = pm.variables.replaceIn(\"{{$guid}}\");",
+              "pm.collectionVariables.set(\"buyerEmail\", \"lab13+\" + uid + \"@example.test\");",
+              "pm.collectionVariables.set(\"buyerPassword\", pm.variables.replaceIn(\"{{$guid}}\"));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Вход покупателя",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/auth/login",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{buyerEmail}}\",\n  \"password\": \"{{buyerPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const token = pm.response.json().token;",
+              "pm.test(\"Выдан JWT\", () => pm.expect(token).to.be.a(\"string\"));",
+              "pm.collectionVariables.set(\"token\", token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Выбор товара из демокаталога",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/products",
+        "header": [],
+        "auth": {
+          "type": "noauth"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const p = pm.response.json().find(p => p.stock >= 2 && p.stock < 100);",
+              "pm.test(\"В демокаталоге есть товар с остатком 2–99\", () => pm.expect(p).to.exist);",
+              "if (p) { pm.collectionVariables.set(\"productId\", p.id); pm.collectionVariables.set(\"price\", p.price); pm.collectionVariables.set(\"initialStock\", p.stock); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Оформление заказа — 201",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/orders",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"items\": [\n    {\n      \"productId\": {{productId}},\n      \"quantity\": 2\n    }\n  ],\n  \"address\": \"Астана, ул. Женис, 62\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "const order = pm.response.json();",
+              "pm.test(\"Сумма равна цене из каталога × 2\", () => pm.expect(order.total).to.eql(2 * Number(pm.collectionVariables.get(\"price\"))));",
+              "pm.collectionVariables.set(\"orderId\", order.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Нехватка товара — 409",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/orders",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"items\": [\n    {\n      \"productId\": {{productId}},\n      \"quantity\": 100\n    }\n  ],\n  \"address\": \"Астана, ул. Женис, 62\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 409\", () => pm.response.to.have.status(409));",
+              "const detail = pm.response.json().details[0];",
+              "pm.test(\"Ответ содержит товар и точный остаток\", () => {",
+              "  pm.expect(detail.productId).to.eql(Number(pm.collectionVariables.get(\"productId\")));",
+              "  pm.expect(detail.available).to.eql(Number(pm.collectionVariables.get(\"initialStock\")) - 2);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Пустая корзина — 400",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/orders",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"items\": [],\n  \"address\": \"Астана, ул. Женис, 62\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "pm.test(\"Причина отказа в details\", () => pm.expect(pm.response.json().details.some(d => d.message === \"Корзина пуста\")).to.be.true);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Мои заказы",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/orders/my",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Созданный заказ есть в списке\", () => pm.expect(pm.response.json().some(o => o.id === Number(pm.collectionVariables.get(\"orderId\")))).to.be.true);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Отмена своего заказа",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/orders/{{orderId}}/cancel",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Статус отмены\", () => pm.expect(pm.response.json().status).to.eql(\"cancelled\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Остаток после отмены",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/products/{{productId}}",
+        "header": [],
+        "auth": {
+          "type": "noauth"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Остаток восстановлен\", () => pm.expect(pm.response.json().stock).to.eql(Number(pm.collectionVariables.get(\"initialStock\"))));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

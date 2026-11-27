@@ -13,7 +13,7 @@ test('прямая ссылка загружает товар, цену и ед�
   expect(screen.getByText('3500 тенге / кг')).toBeInTheDocument();
   expect(screen.getByRole('link', { name: '← В каталог' })).toHaveAttribute('href', '/');
   await userEvent.setup().click(screen.getByRole('button', { name: 'В корзину' }));
-  expect(screen.getByText('Корзина 1')).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Корзина (1)' })).toBeInTheDocument();
   expect(within(screen.getByRole('form', { name: 'Оптовая заявка' })).getByRole('combobox')).toHaveValue('1');
 });
 test('несуществующий товар показывает 404', async () => {

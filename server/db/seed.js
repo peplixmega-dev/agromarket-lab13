@@ -53,6 +53,12 @@ async function seed() {
     ["Администратор", process.env.ADMIN_EMAIL.trim().toLowerCase(), hash],
   );
 
+  await pool.query(readFileSync(new URL('./migrations/013_orders.sql', import.meta.url), 'utf8'));
+  await pool.query('UPDATE products SET farmer_id = (SELECT id FROM users WHERE email = $1)', [
+    process.env.ADMIN_EMAIL.trim().toLowerCase(),
+  ]);
+  if (isLocal) await pool.query(readFileSync(new URL('./seed_stock.sql', import.meta.url), 'utf8'));
+
   console.log(
     `Готово: таблицы созданы, товаров добавлено — ${products.length}, админ — ${process.env.ADMIN_EMAIL}`,
   );

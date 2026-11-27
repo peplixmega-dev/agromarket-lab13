@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { renderWithProviders as render } from '../test/utils';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ProductCard from './ProductCart';
 import { products } from '../test/helpers';

@@ -30,7 +30,7 @@ test('покупатель регистрируется, повторно вхо
   const card = page.getByTestId('product-card').first();
   const productName = await card.getByRole('heading').innerText();
   await card.getByRole('button', { name: 'В корзину' }).click();
-  await expect(page.getByText('Корзина 1', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Корзина (1)', exact: true })).toBeVisible();
   const order = page.getByRole('form', { name: 'Оптовая заявка' });
   await expect(order.getByRole('combobox').locator('option:checked')).toHaveText(productName);
   await order.getByLabel('Имя', { exact: true }).fill('E2E Покупатель');

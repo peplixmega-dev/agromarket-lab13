@@ -16,6 +16,7 @@ const origin = `http://localhost:${port}`;
 // Всегда отдельная база в памяти; DATABASE_URL владельца сюда не попадает.
 const env = {
   ...process.env,
+  AGRO_EMBEDDED_DB: "1",
   DATABASE_URL: `postgresql://postgres:postgres@127.0.0.1:${dbPort}/postgres`,
   JWT_SECRET: randomBytes(48).toString("base64url"),
   CORS_ORIGIN: `${origin},http://localhost:5173`,

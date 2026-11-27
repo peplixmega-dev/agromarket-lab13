@@ -1,6 +1,6 @@
 {
-  "name": "veriti-lab12",
-  "version": "1.0.0",
+  "name": "veriti-agromarket",
+  "version": "1.1.0",
   "private": true,
   "scripts": {
     "setup": "npm --prefix server ci && npm --prefix client ci",
@@ -11,7 +11,8 @@
     "e2e:prod": "npm --prefix client run e2e:prod",
     "test:server": "npm --prefix server run test:local",
     "test:run": "npm --prefix client run test:run",
-    "e2e:smoke": "npm --prefix client run e2e:smoke"
+    "e2e:smoke": "npm --prefix client run e2e:smoke",
+    "dev": "node server/scripts/demo.js"
   },
   "engines": {
     "node": "^22.22.2 || ^24.15.0 || >=26.0.0"

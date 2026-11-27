@@ -20,7 +20,8 @@ export async function apiFetch(path, options = {}) {
       : body.error || `Ошибка HTTP ${res.status}`);
     error.status = res.status;
     error.details = Array.isArray(body.details) ? body.details.filter((item) =>
-      item && typeof item.field === 'string' && typeof item.message === 'string') : [];
+      item && ((typeof item.field === 'string' && typeof item.message === 'string') ||
+        (Number.isInteger(item.productId) && typeof item.name === 'string' && Number.isInteger(item.available)))) : [];
     throw error;
   }
   return res;

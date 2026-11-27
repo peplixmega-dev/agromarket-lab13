@@ -56,7 +56,7 @@ describe('Каталог и сессия — MSW', () => {
     const form = within(screen.getByRole('form', { name: 'Оптовая заявка' }));
     await user.type(form.getByLabelText('Имя'), 'Покупатель');
     await user.click(within(screen.getAllByTestId('product-card')[0]).getByRole('button', { name: 'В корзину' }));
-    expect(screen.getByText('Корзина 1')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Корзина (1)' })).toBeInTheDocument();
     expect(form.getByRole('combobox')).toHaveValue('1');
     expect(form.getByLabelText('Имя')).toHaveValue('Покупатель');
   });
@@ -127,4 +127,33 @@ test('администратор удаляет выбранный товар с
   expect(removedId).toBe('1');
   expect(authorization).toBe('Bearer test-token');
   expect(screen.getByRole('link', { name: products[1].name })).toBeInTheDocument();
+});
+
+test('продавец меняет остаток своего товара, карточка учитывает новый остаток сразу', async () => {
+  localStorage.setItem('token', 'test-token');
+  const seller = { ...account, role: 'admin' };
+  const own = { ...products[0], stock: 0, farmer_id: seller.id };
+  const other = { ...products[1], farmer_id: seller.id + 1 };
+  let sent;
+  server.use(http.get('*/api/auth/me', () => HttpResponse.json(seller)),
+    http.get('*/api/products', () => HttpResponse.json([own, other])),
+    http.patch('*/api/products/1', async ({ request }) => {
+      sent = await request.json();
+      return HttpResponse.json({ ...own, ...sent });
+    }));
+  const user = userEvent.setup();
+  render(<App />);
+  await screen.findByRole('form', { name: 'Новый товар' });
+  await screen.findByRole('heading', { name: own.name });
+  const [mine, theirs] = screen.getAllByTestId('product-card').map((card) => within(card));
+  expect(mine.getByRole('button', { name: 'Нет в наличии' })).toBeDisabled();
+  expect(theirs.queryByText('Изменить остаток')).not.toBeInTheDocument();
+  await user.click(mine.getByText('Изменить остаток'));
+  const stock = mine.getByRole('spinbutton', { name: 'Остаток' });
+  await user.clear(stock);
+  await user.type(stock, '9');
+  await user.click(mine.getByRole('button', { name: 'Сохранить остаток' }));
+  expect(await mine.findByText('Остаток: 9 кг')).toBeInTheDocument();
+  expect(mine.getByRole('button', { name: 'В корзину' })).toBeEnabled();
+  expect(sent).toEqual({ stock: 9 });
 });
