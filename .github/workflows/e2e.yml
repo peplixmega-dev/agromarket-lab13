@@ -1,0 +1,37 @@
+name: Smoke (production)
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * *' # 09:00 Asia/Almaty
+permissions:
+  contents: read
+concurrency:
+  group: e2e-production
+  cancel-in-progress: false
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: client
+    env:
+      BASE_URL: ${{ vars.PRODUCTION_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e:prod
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            client/playwright-report/
+            client/test-results/
+          retention-days: 7

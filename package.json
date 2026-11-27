@@ -1,0 +1,19 @@
+{
+  "name": "veriti-lab12",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "setup": "npm --prefix server ci && npm --prefix client ci",
+    "demo": "node server/scripts/demo.js",
+    "test": "npm --prefix client test",
+    "coverage": "npm --prefix client run coverage",
+    "e2e": "npm --prefix client run e2e",
+    "e2e:prod": "npm --prefix client run e2e:prod",
+    "test:server": "npm --prefix server run test:local",
+    "test:run": "npm --prefix client run test:run",
+    "e2e:smoke": "npm --prefix client run e2e:smoke"
+  },
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+  }
+}

@@ -1,0 +1,24 @@
+# Blueprint для общего репозитория с client/ и server/.
+services:
+  - type: web
+    name: agromarket-api-peplixmega-dev
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    rootDir: server
+    buildCommand: npm ci --omit=dev
+    startCommand: npm run db:migrate && npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: "off"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 2h
+      - key: CORS_ORIGIN
+        sync: false

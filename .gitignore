@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+.env*
+!.env.example
+.vercel/
+.DS_Store
+*.log
+
+test-results/
+playwright-report/
+.playwright-browsers/
+lab10-evidence/
+
+playwright/.cache/
+lab12-evidence/
+!.env.e2e.example

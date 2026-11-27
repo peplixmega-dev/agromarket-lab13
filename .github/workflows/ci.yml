@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-local-password
+          POSTGRES_DB: agromarket_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:ci-local-password@localhost:5432/agromarket_test
+      JWT_SECRET: ci-only-secret-at-least-32-characters
+      CORS_ORIGIN: http://localhost:5173,https://frontend.example
+      ADMIN_EMAIL: admin@example.test
+      ADMIN_PASSWORD: Admin12345
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm test
+
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm run lint
+      - run: npm run test:run
+      - run: npm run coverage
+      - run: npm run build
+        env:
+          VITE_API_URL: https://example.invalid/api
+
+  deploy:
+    needs: [test, build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Проверить настройки CD
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          API_URL: ${{ vars.API_URL }}
+          FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+        run: |
+          test -n "$DEPLOY_HOOK" || { echo "Добавьте Secret RENDER_DEPLOY_HOOK_URL"; exit 1; }
+          test -n "$API_URL" || { echo "Добавьте Variable API_URL"; exit 1; }
+          test -n "$FRONTEND_URL" || { echo "Добавьте Variable FRONTEND_URL"; exit 1; }
+      - name: Запустить деплой проверенного коммита на Render
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: curl --fail --silent --show-error --output /dev/null --max-time 60 -X POST "${DEPLOY_HOOK}&ref=${COMMIT_SHA}"
+      - name: Smoke-тест продакшена
+        run: node scripts/smoke.js
+        env:
+          API_URL: ${{ vars.API_URL }}
+          FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+          EXPECTED_VERSION: ${{ github.sha }}
