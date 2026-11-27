@@ -1,6 +1,9 @@
 import { useState } from 'react';
 
-function ProductCard({ product, onAdd, onDelete, featured = false }) {
+import AddToCartButton from './AddToCartButton';
+import StockForm from './StockForm';
+
+function ProductCard({ product, onAdd, onDelete, onStockSaved, featured = false }) {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
   async function remove() {
@@ -19,7 +22,9 @@ function ProductCard({ product, onAdd, onDelete, featured = false }) {
         <h3><a href={`/products/${product.id}`}>{product.name}</a></h3>
         <p className="card-price">{product.price} тенге</p>
         {product.category && <p>{product.category}</p>}
-        <button className="card-button" type="button" onClick={() => onAdd?.(product)}>В корзину</button>
+        <AddToCartButton product={product} onAdd={onAdd} />
+        {product.stock != null && <p>Остаток: {product.stock} {product.unit}</p>}
+        {onStockSaved && <StockForm product={product} onSaved={onStockSaved} />}
         {product.unit && <p>Единица: {product.unit}</p>}
         {onDelete && <button type="button" disabled={deleting} onClick={remove}>
           {deleting ? 'Удаление…' : 'Удалить товар'}

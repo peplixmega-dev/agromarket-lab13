@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 
-// В проекте нет Router/AuthContext: App читает URL и сессию из браузера.
+import CartProvider from '../context/CartProvider';
 export function renderWithProviders(ui, { route = '/' } = {}) {
   window.history.replaceState({}, '', route);
-  return render(ui);
+  return render(ui, { wrapper: CartProvider });
 }
