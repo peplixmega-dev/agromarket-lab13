@@ -67,8 +67,34 @@ jobs:
         env:
           VITE_API_URL: https://example.invalid/api
 
+  browser:
+    name: E2E (local)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            server/package-lock.json
+            client/package-lock.json
+      - run: npm run setup
+      - run: npx playwright install --with-deps chromium
+        working-directory: client
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-local-report
+          path: |
+            client/playwright-report/
+            client/test-results/
+          retention-days: 7
+
   deploy:
-    needs: [test, build]
+    needs: [test, build, browser]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15

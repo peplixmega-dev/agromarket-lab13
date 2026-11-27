@@ -19,11 +19,13 @@ test('администратор создаёт товар и удаляет е�
   await form.getByLabel('Название', { exact: true }).fill(name);
   await form.getByLabel('Категория', { exact: true }).fill('Мёд');
   await form.getByLabel('Цена, ₸', { exact: true }).fill('3500');
+  await form.getByLabel('Остаток', { exact: true }).fill('4');
   const created = page.waitForResponse((res) => new URL(res.url()).pathname === '/api/products' && res.request().method() === 'POST');
   await form.getByRole('button', { name: 'Добавить' }).click();
   const response = await created;
   expect(response.status()).toBe(201);
-  const { id } = await response.json();
+  const { id, stock } = await response.json();
+  expect(stock).toBe(4);
   const card = page.getByTestId('product-card').filter({ has: page.getByRole('link', { name, exact: true }) });
   try {
     await expect(card).toBeVisible();
