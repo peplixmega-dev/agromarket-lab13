@@ -1,0 +1,19 @@
+
+> server@1.1.0 test
+> vitest run --config vitest.config.js
+
+
+ RUN  v5.0.5 /Users/peplix/Downloads/lab13chickengun-main/server
+
+Готово: таблицы созданы, товаров добавлено — 20, админ — admin@example.test
+Миграция выполнена (инструкций: 3)
+Миграция выполнена (инструкций: 3)
+
+ Test Files  10 passed (10)
+      Tests  66 passed (66)
+   Start at  08:31:05
+   Duration  8.54s (tests 50%, import 37%, setup 6%, transform 6%, worker 1%)
+
+    Isolate  10 workers spawned · ~108ms startup each (spawn + environment, per file)
+             at least ~973ms faster with isolate: false — reuses workers across files instead of one per file
+

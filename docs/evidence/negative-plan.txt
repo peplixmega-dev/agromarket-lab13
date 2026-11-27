@@ -1,0 +1,2 @@
+Защищённое чтение: LockRows → Index Scan; проверка наличия LockRows: PASS
+Контрольная фикстура: Index Scan; проверка наличия LockRows: FAIL
