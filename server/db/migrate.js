@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { readFileSync } from "node:fs";
 import bcrypt from "bcryptjs";
 import { pool } from "./pool.js";
 
@@ -48,6 +49,8 @@ async function migrate() {
       [ADMIN_EMAIL.trim().toLowerCase(), hash],
     );
   }
+  const sql = readFileSync(new URL('./migrations/013_orders.sql', import.meta.url), 'utf8');
+  await pool.query(sql);
   console.log(`Миграция выполнена (инструкций: ${statements.length})`);
 }
 

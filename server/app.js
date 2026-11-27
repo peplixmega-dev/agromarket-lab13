@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import { pool } from "./db/pool.js";
 import productsRouter from "./routes/products.js";
+import purchasesRouter from "./routes/purchases.js";
 import ordersRouter from "./routes/orders.js";
 import authRouter from "./routes/auth.js";
 import categoriesRouter from "./routes/categories.js";
@@ -39,7 +40,7 @@ app.get("/api/health", async (req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/products", productsRouter);
 app.use("/api/categories", categoriesRouter);
-app.use("/api/orders", ordersRouter);
+app.use("/api/orders", purchasesRouter, ordersRouter);
 
 app.use((req, res) => {
   res
